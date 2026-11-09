@@ -1,8 +1,70 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "RaceDay - Track, Compete & Achieve";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<!-- Hero Section -->
+<div class="p-5 mb-4 rounded-3 text-white" style="background: linear-gradient(135deg, #1b3a2b 0%, #0d1f16 100%); border-left: 6px solid #28a745;">
+    <div class="container-fluid py-4">
+        <span class="badge bg-success mb-2 px-3 py-2 text-uppercase fw-semibold">2026 Racing Season</span>
+        <h1 class="display-4 fw-bold">Live Race Management & Results</h1>
+        <p class="col-md-9 fs-5 text-light opacity-75">
+            Connect event organizers with runners, athletes, and timing systems. Seamlessly register for marathons, view certified split times, and track leaderboards in real time.
+        </p>
+        <div class="d-flex gap-3 mt-4">
+            <a asp-controller="Organiser" asp-action="Dashboard" class="btn btn-success btn-lg px-4 fw-semibold shadow-sm">
+                Organiser Portal
+            </a>
+            <a asp-controller="Organiser" asp-action="Events" class="btn btn-outline-light btn-lg px-4 fw-semibold">
+                Explore All Events 🏁
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Highlight Cards -->
+<div class="row g-4 py-2">
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm p-3 rounded-3">
+            <div class="card-body">
+                <div class="fs-1 text-success mb-2">🏃‍♂️</div>
+                <h4 class="card-title fw-bold text-dark">Instant Registration</h4>
+                <p class="card-text text-muted">
+                    Secure athlete registration across multiple distance categories with instant verification and confirmation slips.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm p-3 rounded-3">
+            <div class="card-body">
+                <div class="fs-1 text-success mb-2">⏱️</div>
+                <h4 class="card-title fw-bold text-dark">Official Timing</h4>
+                <p class="card-text text-muted">
+                    Precision event timing integration with automated cutoff tracking, checkpoint splits, and real-time result calculations.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm p-3 rounded-3">
+            <div class="card-body">
+                <div class="fs-1 text-success mb-2">🏆</div>
+                <h4 class="card-title fw-bold text-dark">Live Leaderboards</h4>
+                <p class="card-text text-muted">
+                    Instant category breakdowns, age-group rankings, and verified finisher certificates directly accessible post-race.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Action Banner -->
+<div class="card border-0 shadow-sm rounded-3 mt-4 bg-light p-4 text-center">
+    <div class="card-body">
+        <h3 class="fw-bold text-dark mb-2">Are you managing an upcoming marathon or fun run?</h3>
+        <p class="text-muted mb-3">Configure routes, create age/distance categories, and view real-time participant analytics.</p>
+        <a asp-controller="Organiser" asp-action="CreateEvent" class="btn btn-dark px-4 py-2 fw-semibold">
+            + Schedule an Event
+        </a>
+    </div>
 </div>

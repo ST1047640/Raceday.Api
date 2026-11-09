@@ -1,37 +1,32 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace RaceDay.Web.Models
+﻿namespace RaceDay.Web.Models
 {
-    public class LoginViewModel
+    public class EventViewModel
     {
-        [Required, EmailAddress]
-        public string Email { get; set; } = string.Empty;
-
-        [Required, DataType(DataType.Password)]
-        public string Password { get; set; } = string.Empty;
+        public int EventId { get; set; }
+        public string EventName { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string City { get; set; } = string.Empty;
+        public string EventType { get; set; } = "Running";
+        public string BannerUrl { get; set; } = "https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=800&q=80";
+        public DateTime EventDate { get; set; } = DateTime.UtcNow.AddDays(30);
+        public List<CategoryViewModel> Categories { get; set; } = new();
     }
 
-    public class RegisterViewModel
+    public class CategoryViewModel
     {
-        [Required]
-        public string Name { get; set; } = string.Empty;
-
-        [Required, EmailAddress]
-        public string Email { get; set; } = string.Empty;
-
-        [Required, DataType(DataType.Password)]
-        public string Password { get; set; } = string.Empty;
-
-        [Required]
-        public string Role { get; set; } = "Participant";
+        public int CategoryId { get; set; }
+        public string CategoryName { get; set; } = string.Empty;
+        public decimal Price { get; set; }
     }
 
-    public class UserDto
+    public class RegistrationViewModel
     {
-        public int UserId { get; set; }
-        public string Name { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        public string Role { get; set; } = string.Empty;
-        public string? Token { get; set; }
+        public int RegistrationId { get; set; }
+        public int EventId { get; set; }
+        public string EventName { get; set; } = string.Empty;
+        public string CategoryName { get; set; } = string.Empty;
+        public DateTime RegistrationDate { get; set; } = DateTime.UtcNow;
+        public int BibNumber { get; set; } = 1042;
+        public string Status { get; set; } = "Confirmed";
     }
 }

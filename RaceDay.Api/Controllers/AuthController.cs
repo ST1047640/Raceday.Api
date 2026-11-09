@@ -1,80 +1,132 @@
-﻿using BCrypt.Net;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using RaceDay.Api.Data;
 using RaceDay.Api.DTOs;
 using RaceDay.Api.Models;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 
 namespace RaceDay.Api.Controllers
 {
-    [ApiController]
     [Route("api/[controller]")]
+    [ApiController]
     public class AuthController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private readonly IConfiguration? _configuration;
 
-        public AuthController(AppDbContext context)
+        public AuthController(AppDbContext context, IConfiguration? configuration = null)
         {
             _context = context;
+            _configuration = configuration;
         }
 
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] RegisterDto dto)
         {
-            if (await _context.Users.AnyAsync(u => u.Email.ToLower() == dto.Email.ToLower()))
+            if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
             {
-                return BadRequest(new { message = "Email already registered." });
+                return BadRequest(new { message = "Email and password are required." });
             }
 
-            var allowedRoles = new[] { "Organiser", "Participant" };
-            if (!allowedRoles.Contains(dto.Role))
+            var normalizedEmail = dto.Email.Trim().ToLower();
+
+            if (await _context.Users.AnyAsync(u => u.Email.ToLower() == normalizedEmail))
             {
-                return BadRequest(new { message = "Role must be either 'Organiser' or 'Participant'." });
+                return BadRequest(new { message = "An account with this email already exists." });
             }
+
+            string hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password.Trim());
 
             var user = new User
             {
-                FullName = dto.FullName,
-                Email = dto.Email.ToLower(),
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
-                Role = dto.Role,
-                PhoneNumber = dto.PhoneNumber
+                FullName = string.IsNullOrWhiteSpace(dto.FullName) ? "RaceDay User" : dto.FullName.Trim(),
+                Email = normalizedEmail,
+                PasswordHash = hashedPassword,
+                Role = string.IsNullOrWhiteSpace(dto.Role) ? "Participant" : dto.Role.Trim()
             };
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return StatusCode(201, new { message = "User registered successfully.", userId = user.UserId });
+            return Ok(new { message = "Registration successful. You can now log in." });
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == dto.Email.ToLower());
-            if (user == null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
+            if (string.IsNullOrWhiteSpace(dto.Email) || string.IsNullOrWhiteSpace(dto.Password))
             {
-                return Unauthorized(new { message = "Invalid email or password." });
+                return BadRequest(new { message = "Email and password are required." });
             }
 
-            // Store user details in session
-            HttpContext.Session.SetInt32("UserId", user.UserId);
-            HttpContext.Session.SetString("Role", user.Role);
-            HttpContext.Session.SetString("FullName", user.FullName);
+            var normalizedEmail = dto.Email.Trim().ToLower();
+            var inputPassword = dto.Password.Trim();
+
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail);
+
+            if (user == null)
+            {
+                return BadRequest(new { message = "Invalid email or password." });
+            }
+
+            bool isValid = false;
+            try
+            {
+                isValid = BCrypt.Net.BCrypt.Verify(inputPassword, user.PasswordHash);
+            }
+            catch
+            {
+                isValid = false;
+            }
+
+            if (!isValid && user.PasswordHash == inputPassword)
+            {
+                isValid = true;
+            }
+
+            if (!isValid)
+            {
+                return BadRequest(new { message = "Invalid email or password." });
+            }
+
+            var token = GenerateJwtToken(user);
 
             return Ok(new
             {
-                message = "Login successful.",
-                userId = user.UserId,
+                token = token,
                 role = user.Role,
-                fullName = user.FullName
+                email = user.Email,
+                name = user.FullName,
+                userId = user.UserId
             });
         }
 
-        [HttpPost("logout")]
-        public IActionResult Logout()
+        private string GenerateJwtToken(User user)
         {
-            HttpContext.Session.Clear();
-            return Ok(new { message = "Logged out successfully." });
+            var keyString = _configuration?["Jwt:Key"] ?? "RaceDaySuperSecretKeyForJwtAuthentication2026!";
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(keyString));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new Claim(ClaimTypes.Name, user.FullName ?? user.Email),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Role, user.Role ?? "Participant")
+            };
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration?["Jwt:Issuer"] ?? "RaceDayApi",
+                audience: _configuration?["Jwt:Audience"] ?? "RaceDayWeb",
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(8),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
     }
 }

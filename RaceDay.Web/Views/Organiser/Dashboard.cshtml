@@ -2,38 +2,40 @@
     ViewData["Title"] = "Organiser Dashboard";
 }
 
-<div class="row mb-4">
-    <div class="col-12">
-        <h2 class="fw-bold">Organiser Dashboard</h2>
-        <p class="text-muted">Welcome back. Manage your races, categories, and review enrolled participants.</p>
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="fw-bold text-dark">Organiser Dashboard</h1>
+            <p class="text-muted mb-0">Manage your races, categories, results, and participants.</p>
+        </div>
+        <a asp-action="Events" class="btn btn-primary px-4 py-2 fw-semibold">
+            Manage Races & Events 🏁
+        </a>
     </div>
-</div>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-4">
-        <div class="card text-white bg-primary shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Total Events Created</h5>
-                <h2 class="display-5 fw-bold">@ViewBag.TotalEvents</h2>
-                <a asp-action="Events" class="text-white text-decoration-none">Manage all events &rarr;</a>
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-light">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase fw-bold">Active Races</h6>
+                    <h2 class="fw-bold mb-0 text-primary">@ViewBag.TotalEvents</h2>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-success shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title">Total Enrolments</h5>
-                <h2 class="display-5 fw-bold">--</h2>
-                <span class="small">Active participant registrations</span>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-light">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase fw-bold">Registered Runners</h6>
+                    <h2 class="fw-bold mb-0 text-success">@ViewBag.TotalParticipants</h2>
+                </div>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card text-white bg-warning shadow-sm">
-            <div class="card-body">
-                <h5 class="card-title text-dark">Upcoming Races</h5>
-                <h2 class="display-5 fw-bold text-dark">--</h2>
-                <span class="small text-dark">Scheduled for this season</span>
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-3 bg-light">
+                <div class="card-body">
+                    <h6 class="text-muted text-uppercase fw-bold">Role Status</h6>
+                    <h2 class="fw-bold mb-0 text-info">Organiser</h2>
+                </div>
             </div>
         </div>
     </div>

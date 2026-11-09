@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
-using RaceDay.Web.Models;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
@@ -18,78 +17,163 @@ namespace RaceDay.Web.Controllers
         }
 
         [HttpGet]
-        public IActionResult Login() => View();
+        public IActionResult Login()
+        {
+            return View();
+        }
 
         [HttpPost]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        public async Task<IActionResult> Login(string email, string password)
         {
-            if (!ModelState.IsValid) return View(model);
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            {
+                ViewBag.Error = "Please enter both email and password.";
+                return View();
+            }
 
             var client = _httpClientFactory.CreateClient("RaceDayApi");
-            var json = JsonSerializer.Serialize(model);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var payload = new { Email = email.Trim(), Password = password.Trim() };
+            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
 
-            var response = await client.PostAsync("api/Auth/login", content);
-
-            if (!response.IsSuccessStatusCode)
+            try
             {
-                ModelState.AddModelError(string.Empty, "Invalid login credentials.");
-                return View(model);
+                var response = await client.PostAsync("api/Auth/login", content);
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    try
+                    {
+                        using var errDoc = JsonDocument.Parse(responseBody);
+                        if (errDoc.RootElement.TryGetProperty("message", out var msgProp))
+                        {
+                            ViewBag.Error = msgProp.GetString();
+                        }
+                        else
+                        {
+                            ViewBag.Error = "Invalid email or password.";
+                        }
+                    }
+                    catch
+                    {
+                        ViewBag.Error = "Invalid email or password.";
+                    }
+                    return View();
+                }
+
+                using var doc = JsonDocument.Parse(responseBody);
+                var root = doc.RootElement;
+
+                string token = root.TryGetProperty("token", out var tProp) ? tProp.GetString() ?? "" : "";
+                string role = root.TryGetProperty("role", out var rProp) ? rProp.GetString() ?? "Participant" : "Participant";
+                string name = root.TryGetProperty("name", out var nProp) ? nProp.GetString() ?? email : email;
+
+                HttpContext.Session.SetString("JWToken", token);
+                HttpContext.Session.SetString("UserRole", role);
+                HttpContext.Session.SetString("UserName", name);
+
+                var claims = new List<Claim>
+                {
+                    new Claim(ClaimTypes.Name, name),
+                    new Claim(ClaimTypes.Email, email),
+                    new Claim(ClaimTypes.Role, role)
+                };
+
+                var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                var authProperties = new AuthenticationProperties { IsPersistent = true };
+
+                await HttpContext.SignInAsync(
+                    CookieAuthenticationDefaults.AuthenticationScheme,
+                    new ClaimsPrincipal(claimsIdentity),
+                    authProperties);
+
+                if (role.Equals("Organiser", StringComparison.OrdinalIgnoreCase))
+                {
+                    return RedirectToAction("Dashboard", "Organiser");
+                }
+
+                return RedirectToAction("Events", "Participant");
             }
-
-            var responseBody = await response.Content.ReadAsStringAsync();
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            var user = JsonSerializer.Deserialize<UserDto>(responseBody, options);
-
-            var claims = new List<Claim>
+            catch (Exception ex)
             {
-                new Claim(ClaimTypes.Name, user?.Name ?? model.Email),
-                new Claim(ClaimTypes.Email, model.Email),
-                new Claim(ClaimTypes.Role, user?.Role ?? "Participant"),
-                new Claim("UserId", user?.UserId.ToString() ?? "0")
-            };
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity));
-
-            if (user?.Role == "Organiser")
-            {
-                return RedirectToAction("Dashboard", "Organiser");
+                ViewBag.Error = $"Cannot connect to backend API: {ex.Message}";
+                return View();
             }
-            return RedirectToAction("Index", "Home");
         }
 
         [HttpGet]
-        public IActionResult Register() => View();
+        public IActionResult Register()
+        {
+            return View();
+        }
 
         [HttpPost]
-        public async Task<IActionResult> Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(string fullName, string email, string password, string role)
         {
-            if (!ModelState.IsValid) return View(model);
-
-            var client = _httpClientFactory.CreateClient("RaceDayApi");
-            var json = JsonSerializer.Serialize(model);
-            var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-            var response = await client.PostAsync("api/Auth/register", content);
-
-            if (!response.IsSuccessStatusCode)
+            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
             {
-                ModelState.AddModelError(string.Empty, "Registration failed. Email might already exist.");
-                return View(model);
+                ViewBag.Error = "Email and password are required.";
+                return View();
             }
 
-            return RedirectToAction("Login");
+            var client = _httpClientFactory.CreateClient("RaceDayApi");
+            var payload = new
+            {
+                FullName = fullName?.Trim() ?? "RaceDay User",
+                Email = email.Trim(),
+                Password = password.Trim(),
+                Role = string.IsNullOrWhiteSpace(role) ? "Participant" : role.Trim()
+            };
+
+            var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+
+            try
+            {
+                var response = await client.PostAsync("api/Auth/register", content);
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    try
+                    {
+                        using var errDoc = JsonDocument.Parse(responseBody);
+                        if (errDoc.RootElement.TryGetProperty("message", out var msgProp))
+                        {
+                            ViewBag.Error = msgProp.GetString();
+                        }
+                        else
+                        {
+                            ViewBag.Error = "Registration failed.";
+                        }
+                    }
+                    catch
+                    {
+                        ViewBag.Error = "Registration failed. Please try again.";
+                    }
+                    return View();
+                }
+
+                TempData["Success"] = "Account created successfully! Please log in.";
+                return RedirectToAction("Login");
+            }
+            catch (Exception ex)
+            {
+                ViewBag.Error = $"API connection error: {ex.Message}";
+                return View();
+            }
         }
 
         [HttpPost]
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             HttpContext.Session.Clear();
-            return RedirectToAction("Login");
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Index", "Home");
         }
-
-        public IActionResult AccessDenied() => View();
+        [HttpGet]
+        public IActionResult AccessDenied()
+        {
+            return View();
+        }
     }
 }

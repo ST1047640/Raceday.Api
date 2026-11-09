@@ -1,0 +1,82 @@
+﻿@model dynamic
+@{
+    ViewData["Title"] = "Race Details";
+    var eventId = Model?.EventId ?? Model?.eventId ?? Model?.Id ?? Model?.id ?? 1;
+    var eventName = Model?.EventName ?? Model?.eventName ?? "Soweto Marathon 2026";
+    var city = Model?.City ?? Model?.city ?? "Soweto, Johannesburg";
+    var description = Model?.Description ?? Model?.description ?? "Join thousands of runners in one of South Africa's most iconic road running events.";
+    var banner = Model?.BannerUrl ?? Model?.bannerUrl ?? "https://images.unsplash.com/photo-1452626038306-9aae5e071dd3?auto=format&fit=crop&w=1200&q=80";
+    var categories = Model?.Categories ?? Model?.categories;
+}
+
+<div class="container py-4">
+    <div class="mb-3">
+        <a asp-controller="Participant" asp-action="Events" class="text-decoration-none text-muted small">&larr; Back to Upcoming Races</a>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            @TempData["Error"]
+        </div>
+    }
+
+    <div class="card shadow-sm border-0 rounded-3 overflow-hidden mb-4">
+        <img src="@banner" class="w-100" style="max-height: 320px; object-fit: cover;" alt="@eventName" />
+        <div class="card-body p-4">
+            <span class="badge bg-primary mb-2">Upcoming Event</span>
+            <h2 class="fw-bold mb-2">@eventName</h2>
+            <p class="text-muted"><i class="bi bi-geo-alt-fill text-danger"></i> @city</p>
+            <hr />
+            <p class="lead fs-6 text-secondary">@description</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-6 mx-auto">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body p-4">
+                    <h4 class="fw-bold mb-3 text-primary">Confirm Your Race Enrolment</h4>
+                    <p class="text-muted small mb-4">Select your preferred distance tier to secure your registration.</p>
+
+                    <form asp-controller="Participant" asp-action="Enrol" method="post">
+                        <input type="hidden" name="eventId" value="@eventId" />
+
+                        <div class="mb-3">
+                            <label for="categorySelect" class="form-label fw-semibold">Distance / Category</label>
+                            <select id="categorySelect" name="categoryId" class="form-select" required>
+                                @if (categories != null)
+                                {
+                                    foreach (var cat in categories)
+                                    {
+                                        var catId = cat.CategoryId ?? cat.categoryId ?? cat.Id ?? cat.id ?? 1;
+                                        var catName = cat.CategoryName ?? cat.categoryName ?? cat.Name ?? cat.name ?? "Standard Entry";
+                                        var fee = cat.EntryFee ?? cat.entryFee ?? cat.Price ?? cat.price ?? 250;
+                                        <option value="@catId">@catName - R @fee</option>
+                                    }
+                                }
+                                else
+                                {
+                                    <option value="1">10km Standard Entry - R 180</option>
+                                    <option value="2">21.1km Half Marathon - R 250</option>
+                                    <option value="3">42.2km Full Marathon - R 320</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="form-check mb-4">
+                            <input class="form-check-input" type="checkbox" id="termsCheck" required checked />
+                            <label class="form-check-label small text-muted" for="termsCheck">
+                                I confirm my entry and accept the race terms and conditions.
+                            </label>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 py-2 fw-semibold">
+                            Complete Enrolment
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
