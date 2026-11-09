@@ -1,0 +1,69 @@
+﻿@{
+    ViewData["Title"] = "Manage Events";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold">Manage Races & Events</h2>
+        <p class="text-muted mb-0">View, schedule, and review all active race events.</p>
+    </div>
+    <a asp-action="CreateEvent" class="btn btn-primary">➕ Create New Event</a>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>ID</th>
+                        <th>Event Name</th>
+                        <th>Date</th>
+                        <th>Location</th>
+                        <th>Distance</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="eventsTableBody">
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            Loading events from API...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const rawJson = '@Html.Raw(ViewBag.EventsJson ?? "[]")';
+        try {
+            const events = JSON.parse(rawJson);
+            const tbody = document.getElementById("eventsTableBody");
+
+            if (!events || events.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No events created yet. Click "Create New Event" above to get started.</td></tr>';
+            } else {
+                tbody.innerHTML = events.map(e => `
+                    <tr>
+                        <td class="fw-semibold">#${e.id || e.eventId}</td>
+                        <td class="fw-bold text-primary">${e.name || e.title}</td>
+                        <td>${new Date(e.date).toLocaleDateString()}</td>
+                        <td>${e.location || 'N/A'}</td>
+                        <td><span class="badge bg-info text-dark">${e.distance || 'Standard'}</span></td>
+                        <td><span class="badge bg-success">Active</span></td>
+                        <td class="text-end">
+                            <a href="/Organiser/Categories/${e.id || e.eventId}" class="btn btn-sm btn-outline-secondary">Categories</a>
+                            <a href="/Organiser/Results/${e.id || e.eventId}" class="btn btn-sm btn-outline-success">Results</a>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        } catch (err) {
+            console.error("Failed to parse events JSON", err);
+        }
+    </script>
+}

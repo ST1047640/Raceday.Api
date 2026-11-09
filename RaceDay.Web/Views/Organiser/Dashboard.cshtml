@@ -1,0 +1,40 @@
+﻿@{
+    ViewData["Title"] = "Organiser Dashboard";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h2 class="fw-bold">Organiser Dashboard</h2>
+        <p class="text-muted">Welcome back. Manage your races, categories, and review enrolled participants.</p>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Total Events Created</h5>
+                <h2 class="display-5 fw-bold">@ViewBag.TotalEvents</h2>
+                <a asp-action="Events" class="text-white text-decoration-none">Manage all events &rarr;</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title">Total Enrolments</h5>
+                <h2 class="display-5 fw-bold">--</h2>
+                <span class="small">Active participant registrations</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-warning shadow-sm">
+            <div class="card-body">
+                <h5 class="card-title text-dark">Upcoming Races</h5>
+                <h2 class="display-5 fw-bold text-dark">--</h2>
+                <span class="small text-dark">Scheduled for this season</span>
+            </div>
+        </div>
+    </div>
+</div>
