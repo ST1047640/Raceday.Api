@@ -1,0 +1,48 @@
+﻿@{
+    ViewData["Title"] = "Sign In";
+}
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-5">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body p-4">
+                <h3 class="text-center fw-bold mb-4 text-primary">Sign In to RaceDay</h3>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="alert alert-danger py-2" role="alert">
+                        @ViewBag.Error
+                    </div>
+                }
+
+                @if (TempData["Success"] != null)
+                {
+                    <div class="alert alert-success py-2" role="alert">
+                        @TempData["Success"]
+                    </div>
+                }
+
+                <form asp-controller="Account" asp-action="Login" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label fw-semibold">Email</label>
+                        <input type="email" id="email" name="email" class="form-control" placeholder="name@example.com" required autofocus />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label fw-semibold">Password</label>
+                        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required />
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold">Log In</button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <span class="text-muted small">Don't have an account?</span>
+                    <a asp-controller="Account" asp-action="Register" class="small text-decoration-none">Register here</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

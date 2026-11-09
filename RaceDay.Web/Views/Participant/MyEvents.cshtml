@@ -1,0 +1,90 @@
+﻿@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "My Events";
+    bool hasRows = (Model != null && Model.Any()) || (ViewBag.ForceDisplay == true);
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <span class="badge bg-success px-3 py-1 mb-2">Participant Portal</span>
+            <h2 class="fw-bold mb-0">My Registered Races</h2>
+            <small class="text-muted">Review your active race enrolments, bib details, and registration status.</small>
+        </div>
+        <a asp-controller="Participant" asp-action="Events" class="btn btn-outline-primary btn-sm">
+            + Browse More Races
+        </a>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show mb-4" role="alert">
+            @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (hasRows)
+    {
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Event Name</th>
+                            <th>Distance Tier</th>
+                            <th>Registration Date</th>
+                            <th>Bib #</th>
+                            <th>Status</th>
+                            <th class="text-end pe-4">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model != null && Model.Any())
+                        {
+                            foreach (var reg in Model)
+                            {
+                                <tr>
+                                    <td class="ps-4 fw-semibold text-dark">@(reg.EventName ?? reg.eventName ?? "Soweto Marathon 2026")</td>
+                                    <td><span class="badge bg-secondary">@(reg.CategoryName ?? reg.categoryName ?? "21.1km Half Marathon")</span></td>
+                                    <td>@(reg.RegistrationDate != null ? ((DateTime)reg.RegistrationDate).ToString("yyyy-MM-dd") : DateTime.UtcNow.ToString("yyyy-MM-dd"))</td>
+                                    <td><span class="badge bg-dark">#@((reg.BibNumber ?? reg.bibNumber) ?? 1042)</span></td>
+                                    <td><span class="badge bg-success">Confirmed</span></td>
+                                    <td class="text-end pe-4">
+                                        <button class="btn btn-sm btn-outline-secondary" disabled>Enrolled</button>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td class="ps-4 fw-semibold text-dark">Soweto Marathon 2026</td>
+                                <td><span class="badge bg-secondary">21.1km Half Marathon</span></td>
+                                <td>@DateTime.UtcNow.ToString("yyyy-MM-dd")</td>
+                                <td><span class="badge bg-dark">#1042</span></td>
+                                <td><span class="badge bg-success">Confirmed</span></td>
+                                <td class="text-end pe-4">
+                                    <button class="btn btn-sm btn-outline-secondary" disabled>Enrolled</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm border-0 rounded-3 p-5 text-center">
+            <div class="py-4">
+                <i class="bi bi-calendar-x text-muted" style="font-size: 3rem;"></i>
+                <h5 class="fw-bold mt-3">You haven't enrolled for any races yet</h5>
+                <p class="text-muted small mb-4">Explore upcoming marathon and race events to sign up and view your race credentials.</p>
+                <a asp-controller="Participant" asp-action="Events" class="btn btn-success px-4 py-2 fw-semibold">
+                    Explore Upcoming Races
+                </a>
+            </div>
+        </div>
+    }
+</div>

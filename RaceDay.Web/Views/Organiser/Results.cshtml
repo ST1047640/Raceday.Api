@@ -1,0 +1,118 @@
+﻿@{
+    ViewData["Title"] = "Race Results & Leaderboard";
+    var eventId = ViewBag.EventId;
+    var eventName = ViewBag.EventName ?? $"Event #{eventId}";
+}
+
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <span class="badge bg-success px-3 py-2 text-uppercase fw-semibold mb-2">Race Management</span>
+            <h2 class="fw-bold text-dark mb-0">Results & Leaderboard: @eventName</h2>
+            <p class="text-muted">Record verified finish times and display certified runner standings.</p>
+        </div>
+        <a asp-action="Events" class="btn btn-outline-secondary">&larr; Back to Events</a>
+    </div>
+
+    <div class="row g-4">
+        <!-- Capture Result Form -->
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm p-4">
+                <h5 class="fw-bold mb-3 text-dark">Log Runner Finish</h5>
+                <form asp-action="LogResult" method="post">
+                    <input type="hidden" name="eventId" value="@eventId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Bib Number</label>
+                        <input type="number" name="bibNumber" class="form-control" placeholder="e.g. 1042" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Athlete Name</label>
+                        <input type="text" name="athleteName" class="form-control" placeholder="e.g. Sipho Ndlovu" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Finish Time</label>
+                        <input type="text" name="finishTime" class="form-control" placeholder="00:42:15" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Overall Position</label>
+                        <input type="number" name="position" class="form-control" placeholder="1" required />
+                    </div>
+
+                    <button type="submit" class="btn btn-success fw-bold w-100 py-2 mt-2">
+                        + Save Result ⏱️
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Leaderboard Table -->
+        <div class="col-md-8">
+            <div class="card border-0 shadow-sm p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold text-dark mb-0">Official Standings</h5>
+                    <span class="badge bg-light text-dark border">Certified Times</span>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width: 70px;">Pos</th>
+                                <th>Bib #</th>
+                                <th>Athlete</th>
+                                <th>Gun Time</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">Loading official results...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const rawJson = '@Html.Raw(ViewBag.ResultsJson ?? "[]")';
+        const tbody = document.getElementById("resultsTableBody");
+
+        try {
+            const results = JSON.parse(rawJson);
+            if (!results || results.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No results recorded yet for this event. Use the form on the left to capture times.</td></tr>';
+                return;
+            }
+
+            let rows = "";
+            results.sort((a, b) => (a.position || 999) - (b.position || 999));
+            results.forEach(r => {
+                const pos = r.position || "-";
+                const bib = r.bibNumber || r.bib || "-";
+                const name = r.athleteName || r.runnerName || "Participant";
+                const time = r.finishTime || r.time || "00:00:00";
+
+                rows += `
+                    <tr>
+                        <td class="fw-bold text-primary">#${pos}</td>
+                        <td><span class="badge bg-light text-dark border">${bib}</span></td>
+                        <td class="fw-semibold text-dark">${name}</td>
+                        <td class="font-monospace text-success fw-bold">${time}</td>
+                        <td><span class="badge bg-success">Finished</span></td>
+                    </tr>
+                `;
+            });
+            tbody.innerHTML = rows;
+        } catch {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">No results recorded yet.</td></tr>';
+        }
+    });
+</script>
